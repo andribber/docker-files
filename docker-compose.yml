@@ -1,0 +1,67 @@
+volumes:
+  postgres-data:
+    driver: local
+
+  redis-data:
+    driver: local
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: .dockerfiles/php/Dockerfile
+      pull: true
+    container_name: app
+    tty: true
+    ports:
+      - 9000:9000
+    volumes:
+      - .:/var/www
+    networks:
+      - govisa
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - 80:80
+    volumes:
+      - .:/var/www
+      - ./.dockerfiles/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - govisa
+
+  postgres:
+    image: postgres:14.7-alpine
+    container_name: govisa-db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=govisa_pgdb
+      - POSTGRES_PASSWORD=pgpwd
+      - POSTGRES_USER=pguser
+    networks:
+      - govisa
+
+  mailpit:
+    image: axllent/mailpit:v1.9
+    container_name: govisa-mailpit
+    networks:
+      - govisa
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - 6379:6379
+    networks:
+      - govisa
+
+networks:
+  govisa:
+    driver: bridge
