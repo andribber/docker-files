@@ -10,10 +10,13 @@ RUN apk add --no-cache \
 
 # Install PHP extensions
 RUN docker-php-ext-install gd \
-    && docker-php-ext-install zip \
-    && docker-php-ext-install pdo_mysql
+    && docker-php-ext-install zip
 
-# Get latest Composer
+# Rename it to php.ini
+RUN mv /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini \
+    && sed -i "/memory_limit = .*/c\memory_limit =-1" /usr/local/etc/php/php.ini \
+    && sed -i "/listen = .*/c\listen = [::]:9000" /usr/local/etc/php-fpm.d/www.conf
+
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
